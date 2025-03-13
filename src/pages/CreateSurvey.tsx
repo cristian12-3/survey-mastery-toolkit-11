@@ -51,7 +51,8 @@ export default function CreateSurvey() {
     },
     trigger: {
       type: 'ticket-closed',
-      delayHours: 24
+      delayHours: 24,
+      sendAutomatically: false
     }
   });
 

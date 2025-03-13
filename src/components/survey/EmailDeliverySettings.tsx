@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -9,10 +10,11 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CalendarIcon, Clock, Mail, Ticket, Calendar as CalendarIcon2, Check, X, UserPlus, Users } from "lucide-react";
+import { CalendarIcon, Clock, Mail, Ticket, Calendar as CalendarIcon2, Check, X, UserPlus, Users, ChevronDown, ChevronUp } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Checkbox } from "@/components/ui/checkbox";
+import { useToast } from "@/hooks/use-toast";
 
 const mockCustomers = [
   { id: '1', email: 'customer1@example.com', name: 'John Doe' },
@@ -38,6 +40,7 @@ export type DeliveryConfig = {
   trigger?: {
     type: 'ticket-closed' | 'purchase-completed';
     delayHours: number;
+    sendAutomatically: boolean;
   };
 };
 
@@ -47,11 +50,26 @@ interface EmailDeliverySettingsProps {
 }
 
 export default function EmailDeliverySettings({ deliveryConfig, onConfigChange }: EmailDeliverySettingsProps) {
+  const { toast } = useToast();
   const [emailInput, setEmailInput] = useState<string>('');
   const [date, setDate] = useState<Date | undefined>(deliveryConfig.schedule?.startDate);
   const [showCustomerSelector, setShowCustomerSelector] = useState<boolean>(false);
   const [selectedCustomers, setSelectedCustomers] = useState<string[]>(deliveryConfig.emailAddresses);
   const [filterText, setFilterText] = useState<string>('');
+  const [showSelectedRecipients, setShowSelectedRecipients] = useState<boolean>(false);
+  
+  // Ensure trigger has sendAutomatically property
+  useEffect(() => {
+    if (!deliveryConfig.trigger?.hasOwnProperty('sendAutomatically')) {
+      onConfigChange({
+        ...deliveryConfig,
+        trigger: {
+          ...deliveryConfig.trigger,
+          sendAutomatically: false,
+        }
+      });
+    }
+  }, []);
 
   useEffect(() => {
     setSelectedCustomers(deliveryConfig.emailAddresses);
@@ -134,6 +152,23 @@ export default function EmailDeliverySettings({ deliveryConfig, onConfigChange }
           ...deliveryConfig.schedule,
           dayOfWeek: day,
         },
+      });
+    }
+  };
+
+  const toggleAutomaticSending = () => {
+    onConfigChange({
+      ...deliveryConfig,
+      trigger: {
+        ...deliveryConfig.trigger,
+        sendAutomatically: !deliveryConfig.trigger?.sendAutomatically,
+      }
+    });
+
+    if (!deliveryConfig.trigger?.sendAutomatically) {
+      toast({
+        title: "Automatic sending enabled",
+        description: `Surveys will be sent automatically when a ${deliveryConfig.trigger?.type === 'ticket-closed' ? 'ticket is closed' : 'purchase is completed'}.`,
       });
     }
   };
@@ -329,20 +364,38 @@ export default function EmailDeliverySettings({ deliveryConfig, onConfigChange }
             </div>
           )}
           
-          {deliveryConfig.emailAddresses.length > 0 ? (
-            <div className="space-y-2">
-              <h4 className="text-sm font-medium mb-2">Selected Recipients ({deliveryConfig.emailAddresses.length})</h4>
-              {deliveryConfig.emailAddresses.map((email, index) => (
-                <div key={index} className="flex items-center justify-between bg-muted p-2 rounded">
-                  <span className="text-sm">{email}</span>
-                  <Button variant="ghost" size="sm" onClick={() => removeEmail(email)}>
-                    <X className="h-4 w-4" />
-                  </Button>
+          {deliveryConfig.emailAddresses.length > 0 && (
+            <div className="border rounded-md p-4 mb-4 bg-background">
+              <Button 
+                variant="outline" 
+                className="w-full flex justify-between items-center mb-3"
+                onClick={() => setShowSelectedRecipients(!showSelectedRecipients)}
+              >
+                <span className="font-medium">Selected Recipients ({deliveryConfig.emailAddresses.length})</span>
+                {showSelectedRecipients ? (
+                  <ChevronUp className="h-4 w-4" />
+                ) : (
+                  <ChevronDown className="h-4 w-4" />
+                )}
+              </Button>
+              
+              {showSelectedRecipients && (
+                <div className="space-y-2 mt-4 max-h-60 overflow-auto">
+                  {deliveryConfig.emailAddresses.map((email, index) => (
+                    <div key={index} className="flex items-center justify-between bg-muted p-2 rounded">
+                      <span className="text-sm">{email}</span>
+                      <Button variant="ghost" size="sm" onClick={() => removeEmail(email)}>
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
                 </div>
-              ))}
+              )}
             </div>
-          ) : (
-            <p className="text-sm text-muted-foreground">No recipients added yet</p>
+          )}
+          
+          {deliveryConfig.emailAddresses.length === 0 && (
+            <p className="text-sm text-muted-foreground mb-4">No recipients added yet</p>
           )}
         </div>
         
@@ -491,6 +544,20 @@ export default function EmailDeliverySettings({ deliveryConfig, onConfigChange }
                 <p className="text-xs text-muted-foreground mt-1">
                   Time to wait after the trigger event before sending the survey
                 </p>
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <Switch 
+                  id="auto-send"
+                  checked={deliveryConfig.trigger?.sendAutomatically || false}
+                  onCheckedChange={toggleAutomaticSending}
+                />
+                <Label htmlFor="auto-send" className="cursor-pointer">
+                  <div className="font-medium">Send automatically</div>
+                  <p className="text-xs text-muted-foreground">
+                    Automatically send surveys when the {deliveryConfig.trigger?.type === 'ticket-closed' ? 'ticket is closed' : 'purchase is completed'}
+                  </p>
+                </Label>
               </div>
             </div>
           </>
