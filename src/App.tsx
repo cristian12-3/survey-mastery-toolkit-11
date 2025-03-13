@@ -9,6 +9,7 @@ import CreateSurvey from "./pages/CreateSurvey";
 import Results from "./pages/Results";
 import NotFound from "./pages/NotFound";
 import TakeSurvey from "./pages/TakeSurvey";
+import Suggestions from "./pages/Suggestions";
 
 const queryClient = new QueryClient();
 
@@ -23,6 +24,7 @@ const App = () => (
           <Route path="/create" element={<CreateSurvey />} />
           <Route path="/results" element={<Results />} />
           <Route path="/survey/:surveyId" element={<TakeSurvey />} />
+          <Route path="/suggestions" element={<Suggestions />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
