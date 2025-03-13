@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { Button } from "@/components/ui/button";
@@ -7,14 +6,25 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import QuestionBuilder from "@/components/survey/QuestionBuilder";
-import { Plus, Send } from "lucide-react";
+import { Plus, Send, Share2, Save, Copy } from "lucide-react";
 import { Question } from "@/utils/sampleData";
 import { useToast } from "@/hooks/use-toast";
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
+import { 
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { useNavigate } from 'react-router-dom';
 
 export default function CreateSurvey() {
   const { toast } = useToast();
+  const navigate = useNavigate();
   
   const [surveyTitle, setSurveyTitle] = useState<string>('');
   const [surveyDescription, setSurveyDescription] = useState<string>('');
@@ -28,6 +38,8 @@ export default function CreateSurvey() {
     }
   ]);
   const [activeTab, setActiveTab] = useState<string>('design');
+  const [surveyId, setSurveyId] = useState<string>('');
+  const [dialogOpen, setDialogOpen] = useState<boolean>(false);
 
   const addQuestion = () => {
     const newQuestion: Question = {
@@ -95,22 +107,55 @@ export default function CreateSurvey() {
       return;
     }
     
-    // Here we'd normally save the survey to a database
+    const newSurveyId = surveyId || uuidv4();
+    setSurveyId(newSurveyId);
+    
+    const survey = {
+      id: newSurveyId,
+      title: surveyTitle,
+      description: surveyDescription,
+      questions,
+      createdAt: new Date().toISOString()
+    };
+    
+    const savedSurveys = JSON.parse(localStorage.getItem('surveys') || '[]');
+    const updatedSurveys = surveyId 
+      ? savedSurveys.map((s: any) => s.id === surveyId ? survey : s)
+      : [...savedSurveys, survey];
+    
+    localStorage.setItem('surveys', JSON.stringify(updatedSurveys));
+    
     toast({
       title: "Survey saved!",
       description: "Your survey has been created successfully"
     });
     
-    console.log({
-      title: surveyTitle,
-      description: surveyDescription,
-      questions,
-      createdAt: new Date().toISOString()
-    });
+    console.log(survey);
+    
+    setDialogOpen(true);
+  };
+
+  const shareSurvey = () => {
+    setDialogOpen(true);
   };
 
   const previewSurvey = () => {
     setActiveTab('preview');
+  };
+  
+  const copySurveyLink = () => {
+    const surveyLink = `${window.location.origin}/survey/${surveyId}`;
+    navigator.clipboard.writeText(surveyLink);
+    
+    toast({
+      title: "Link copied!",
+      description: "Survey link has been copied to clipboard"
+    });
+  };
+  
+  const navigateToSurvey = () => {
+    navigate(`/survey/${surveyId}`);
+    setDialogOpen(false);
   };
 
   return (
@@ -195,8 +240,13 @@ export default function CreateSurvey() {
                   Preview
                 </Button>
                 <Button onClick={saveSurvey}>
-                  <Send className="mr-2 h-4 w-4" /> Save Survey
+                  <Save className="mr-2 h-4 w-4" /> Save Survey
                 </Button>
+                {surveyId && (
+                  <Button variant="secondary" onClick={shareSurvey}>
+                    <Share2 className="mr-2 h-4 w-4" /> Share Survey
+                  </Button>
+                )}
               </div>
             </div>
           </TabsContent>
@@ -361,6 +411,35 @@ export default function CreateSurvey() {
           </TabsContent>
         </Tabs>
       </main>
+      
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Share Survey</DialogTitle>
+            <DialogDescription>
+              Your survey is ready to be shared with respondents. Use the link below.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex items-center space-x-2 mt-4">
+            <div className="bg-muted p-2 rounded-md flex-1 overflow-hidden">
+              <p className="text-sm font-mono truncate">
+                {window.location.origin}/survey/{surveyId}
+              </p>
+            </div>
+            <Button variant="outline" size="sm" onClick={copySurveyLink}>
+              <Copy className="h-4 w-4" />
+            </Button>
+          </div>
+          <DialogFooter className="sm:justify-start mt-4">
+            <Button variant="default" onClick={navigateToSurvey}>
+              Open Survey
+            </Button>
+            <Button variant="outline" onClick={() => setDialogOpen(false)}>
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       
       <Footer />
     </div>
