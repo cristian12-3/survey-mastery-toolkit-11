@@ -6,11 +6,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import QuestionBuilder from "@/components/survey/QuestionBuilder";
-import { Plus, Send, Share2, Save, Copy } from "lucide-react";
+import { Plus, Send, Share2, Save, Copy, Mail } from "lucide-react";
 import { Question } from "@/utils/sampleData";
 import { useToast } from "@/hooks/use-toast";
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
+import EmailDeliverySettings, { DeliveryConfig } from '@/components/survey/EmailDeliverySettings';
 import { 
   Dialog,
   DialogContent,
@@ -40,6 +41,19 @@ export default function CreateSurvey() {
   const [activeTab, setActiveTab] = useState<string>('design');
   const [surveyId, setSurveyId] = useState<string>('');
   const [dialogOpen, setDialogOpen] = useState<boolean>(false);
+  const [deliveryConfig, setDeliveryConfig] = useState<DeliveryConfig>({
+    type: 'manual',
+    emailAddresses: [],
+    schedule: {
+      frequency: 'monthly',
+      dayOfMonth: 1,
+      time: '09:00'
+    },
+    trigger: {
+      type: 'ticket-closed',
+      delayHours: 24
+    }
+  });
 
   const addQuestion = () => {
     const newQuestion: Question = {
@@ -115,6 +129,7 @@ export default function CreateSurvey() {
       title: surveyTitle,
       description: surveyDescription,
       questions,
+      deliveryConfig,
       createdAt: new Date().toISOString()
     };
     
@@ -158,6 +173,26 @@ export default function CreateSurvey() {
     setDialogOpen(false);
   };
 
+  const sendSurveyEmails = () => {
+    if (deliveryConfig.emailAddresses.length === 0) {
+      toast({
+        title: "No recipients",
+        description: "Please add at least one email address",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // In a real app, this would connect to a backend service
+    // For demo purposes, we'll just show a success toast
+    toast({
+      title: "Emails queued",
+      description: `Survey will be sent to ${deliveryConfig.emailAddresses.length} recipient(s) according to your delivery settings`,
+    });
+
+    console.log("Email delivery configuration:", deliveryConfig);
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Navbar />
@@ -171,8 +206,9 @@ export default function CreateSurvey() {
         </div>
         
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-3 mb-8">
+          <TabsList className="grid w-full grid-cols-4 mb-8">
             <TabsTrigger value="design">Design Survey</TabsTrigger>
+            <TabsTrigger value="delivery">Email Delivery</TabsTrigger>
             <TabsTrigger value="settings">Settings</TabsTrigger>
             <TabsTrigger value="preview">Preview</TabsTrigger>
           </TabsList>
@@ -247,6 +283,21 @@ export default function CreateSurvey() {
                     <Share2 className="mr-2 h-4 w-4" /> Share Survey
                   </Button>
                 )}
+              </div>
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="delivery" className="animate-fade-in">
+            <div className="grid gap-8">
+              <EmailDeliverySettings 
+                deliveryConfig={deliveryConfig}
+                onConfigChange={setDeliveryConfig}
+              />
+              
+              <div className="flex justify-end mt-4">
+                <Button onClick={sendSurveyEmails} disabled={deliveryConfig.emailAddresses.length === 0}>
+                  <Mail className="mr-2 h-4 w-4" /> Send Now
+                </Button>
               </div>
             </div>
           </TabsContent>
