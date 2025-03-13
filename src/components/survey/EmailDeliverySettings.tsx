@@ -1,5 +1,4 @@
-
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
@@ -10,9 +9,21 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CalendarIcon, Clock, Mail, Ticket, Calendar as CalendarIcon2 } from "lucide-react";
+import { CalendarIcon, Clock, Mail, Ticket, Calendar as CalendarIcon2, Check, X, UserPlus, Users } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { Checkbox } from "@/components/ui/checkbox";
+
+const mockCustomers = [
+  { id: '1', email: 'customer1@example.com', name: 'John Doe' },
+  { id: '2', email: 'customer2@example.com', name: 'Jane Smith' },
+  { id: '3', email: 'customer3@example.com', name: 'Robert Johnson' },
+  { id: '4', email: 'customer4@example.com', name: 'Lisa Brown' },
+  { id: '5', email: 'customer5@example.com', name: 'Michael Wilson' },
+  { id: '6', email: 'customer6@example.com', name: 'Sarah Davis' },
+  { id: '7', email: 'customer7@example.com', name: 'James Miller' },
+  { id: '8', email: 'customer8@example.com', name: 'Emily Taylor' },
+];
 
 export type DeliveryConfig = {
   type: 'manual' | 'scheduled' | 'triggered';
@@ -38,6 +49,13 @@ interface EmailDeliverySettingsProps {
 export default function EmailDeliverySettings({ deliveryConfig, onConfigChange }: EmailDeliverySettingsProps) {
   const [emailInput, setEmailInput] = useState<string>('');
   const [date, setDate] = useState<Date | undefined>(deliveryConfig.schedule?.startDate);
+  const [showCustomerSelector, setShowCustomerSelector] = useState<boolean>(false);
+  const [selectedCustomers, setSelectedCustomers] = useState<string[]>(deliveryConfig.emailAddresses);
+  const [filterText, setFilterText] = useState<string>('');
+
+  useEffect(() => {
+    setSelectedCustomers(deliveryConfig.emailAddresses);
+  }, [deliveryConfig.emailAddresses]);
 
   const handleDeliveryTypeChange = (value: 'manual' | 'scheduled' | 'triggered') => {
     onConfigChange({
@@ -137,6 +155,46 @@ export default function EmailDeliverySettings({ deliveryConfig, onConfigChange }
     });
   };
 
+  const selectAllCustomers = () => {
+    const allEmails = mockCustomers.map(customer => customer.email);
+    onConfigChange({
+      ...deliveryConfig,
+      emailAddresses: allEmails,
+    });
+    setSelectedCustomers(allEmails);
+  };
+
+  const deselectAllCustomers = () => {
+    onConfigChange({
+      ...deliveryConfig,
+      emailAddresses: [],
+    });
+    setSelectedCustomers([]);
+  };
+
+  const toggleCustomer = (email: string) => {
+    if (selectedCustomers.includes(email)) {
+      const updatedSelection = selectedCustomers.filter(e => e !== email);
+      setSelectedCustomers(updatedSelection);
+      onConfigChange({
+        ...deliveryConfig,
+        emailAddresses: updatedSelection,
+      });
+    } else {
+      const updatedSelection = [...selectedCustomers, email];
+      setSelectedCustomers(updatedSelection);
+      onConfigChange({
+        ...deliveryConfig,
+        emailAddresses: updatedSelection,
+      });
+    }
+  };
+
+  const filteredCustomers = mockCustomers.filter(customer => 
+    customer.name.toLowerCase().includes(filterText.toLowerCase()) || 
+    customer.email.toLowerCase().includes(filterText.toLowerCase())
+  );
+
   return (
     <Card>
       <CardHeader>
@@ -195,14 +253,90 @@ export default function EmailDeliverySettings({ deliveryConfig, onConfigChange }
             />
             <Button onClick={addEmail} type="button">Add</Button>
           </div>
+
+          <div className="flex space-x-2 mb-4">
+            <Button 
+              onClick={() => setShowCustomerSelector(!showCustomerSelector)} 
+              variant="outline" 
+              className="flex-1"
+            >
+              <Users className="mr-2 h-4 w-4" />
+              {showCustomerSelector ? "Hide Customer List" : "Select from Customers"}
+            </Button>
+          </div>
+          
+          {showCustomerSelector && (
+            <div className="border rounded-md p-4 mb-4 bg-background">
+              <div className="flex justify-between items-center mb-3">
+                <h4 className="font-medium">Customer Selection</h4>
+                <div className="flex space-x-2">
+                  <Button onClick={selectAllCustomers} size="sm" variant="outline">
+                    <Check className="mr-1 h-3 w-3" /> Select All
+                  </Button>
+                  <Button onClick={deselectAllCustomers} size="sm" variant="outline">
+                    <X className="mr-1 h-3 w-3" /> Deselect All
+                  </Button>
+                </div>
+              </div>
+              
+              <Input 
+                placeholder="Filter customers..." 
+                value={filterText} 
+                onChange={(e) => setFilterText(e.target.value)}
+                className="mb-3"
+              />
+              
+              <div className="max-h-60 overflow-auto border rounded-md">
+                {filteredCustomers.length > 0 ? (
+                  filteredCustomers.map(customer => (
+                    <div 
+                      key={customer.id} 
+                      className="flex items-center justify-between p-2 hover:bg-muted border-b last:border-0"
+                    >
+                      <div className="flex items-center space-x-2">
+                        <Checkbox 
+                          id={`customer-${customer.id}`}
+                          checked={selectedCustomers.includes(customer.email)}
+                          onCheckedChange={() => toggleCustomer(customer.email)}
+                        />
+                        <Label 
+                          htmlFor={`customer-${customer.id}`}
+                          className="cursor-pointer flex-1"
+                        >
+                          <div>{customer.name}</div>
+                          <div className="text-xs text-muted-foreground">{customer.email}</div>
+                        </Label>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => toggleCustomer(customer.email)}
+                      >
+                        {selectedCustomers.includes(customer.email) ? (
+                          <X className="h-4 w-4" />
+                        ) : (
+                          <UserPlus className="h-4 w-4" />
+                        )}
+                      </Button>
+                    </div>
+                  ))
+                ) : (
+                  <div className="p-3 text-center text-muted-foreground">
+                    No customers match your search
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
           
           {deliveryConfig.emailAddresses.length > 0 ? (
             <div className="space-y-2">
+              <h4 className="text-sm font-medium mb-2">Selected Recipients ({deliveryConfig.emailAddresses.length})</h4>
               {deliveryConfig.emailAddresses.map((email, index) => (
                 <div key={index} className="flex items-center justify-between bg-muted p-2 rounded">
                   <span className="text-sm">{email}</span>
                   <Button variant="ghost" size="sm" onClick={() => removeEmail(email)}>
-                    Remove
+                    <X className="h-4 w-4" />
                   </Button>
                 </div>
               ))}
