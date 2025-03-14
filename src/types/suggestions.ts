@@ -9,6 +9,9 @@ export interface Suggestion {
   category?: string;
   priority?: 'low' | 'medium' | 'high';
   isAnonymous?: boolean;
+  response?: string;
+  responseDate?: string;
+  similarSuggestions?: string[];
 }
 
 export interface SuggestionFormData {
@@ -29,4 +32,28 @@ export interface MonthlyReport {
     count: number;
   }[];
   suggestions: Suggestion[];
+}
+
+export interface Customer {
+  id: string;
+  brandName: string;
+  contactEmail: string;
+  contactPhone: string;
+  acquiredServices: string[];
+  createdAt: string;
+  growthMetrics?: {
+    period: string;
+    revenue: number;
+    userCount: number;
+  }[];
+}
+
+export interface KnowledgeBaseItem {
+  id: string;
+  title: string;
+  content: string;
+  category: string;
+  tags: string[];
+  createdAt: string;
+  updatedAt: string;
 }
