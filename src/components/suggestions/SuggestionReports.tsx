@@ -1,303 +1,186 @@
-import { useState, useMemo } from 'react';
-import { format, parseISO, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns';
+
+import { useState } from 'react';
+import { format, parseISO, startOfMonth, endOfMonth, eachMonthOfInterval, subMonths } from 'date-fns';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import { Calendar, BarChart } from 'lucide-react';
 import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardHeader, 
-  CardTitle 
-} from "@/components/ui/card";
-import {
-  PieChart,
-  Pie,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
   CartesianGrid,
-  Tooltip,
   Legend,
   ResponsiveContainer,
-  Cell
+  XAxis,
+  YAxis,
+  Tooltip,
+  BarChart as RechartsBarChart,
+  Bar
 } from 'recharts';
 import { Suggestion, MonthlyReport } from '@/types/suggestions';
-import { Badge } from '@/components/ui/badge';
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from "@/components/ui/select";
-import { BarChart as BarChartIcon } from 'lucide-react';
 
 interface SuggestionReportsProps {
   suggestions: Suggestion[];
 }
 
 export default function SuggestionReports({ suggestions }: SuggestionReportsProps) {
-  const [selectedMonth, setSelectedMonth] = useState<string>(() => {
+  const [timeRange, setTimeRange] = useState<string>('3');
+  
+  // Generate monthly reports
+  const generateMonthlyReports = (): MonthlyReport[] => {
     const now = new Date();
-    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-  });
-  
-  const availableMonths = useMemo(() => {
-    const months = new Set<string>();
+    const months = parseInt(timeRange);
+    const startDate = subMonths(now, months);
     
-    suggestions.forEach(suggestion => {
-      const date = parseISO(suggestion.createdAt);
-      const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-      months.add(monthKey);
+    // Get all months in the range
+    const monthsRange = eachMonthOfInterval({
+      start: startDate,
+      end: now
     });
     
-    return Array.from(months).sort().reverse();
-  }, [suggestions]);
+    // Create reports for each month
+    return monthsRange.map(date => {
+      const monthStart = startOfMonth(date);
+      const monthEnd = endOfMonth(date);
+      
+      // Filter suggestions for this month
+      const monthlySuggestions = suggestions.filter(suggestion => {
+        const suggestionDate = new Date(suggestion.createdAt);
+        return suggestionDate >= monthStart && suggestionDate <= monthEnd;
+      });
+      
+      // Count implementations
+      const implementedCount = monthlySuggestions.filter(s => s.status === 'implemented').length;
+      
+      // Get top categories
+      const categoryCounts: Record<string, number> = {};
+      monthlySuggestions.forEach(suggestion => {
+        if (suggestion.category) {
+          categoryCounts[suggestion.category] = (categoryCounts[suggestion.category] || 0) + 1;
+        }
+      });
+      
+      // Sort categories by count and take top 3
+      const topCategories = Object.entries(categoryCounts)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 3)
+        .map(([category, count]) => ({ category, count }));
+      
+      return {
+        month: format(date, 'MMMM'),
+        year: date.getFullYear(),
+        totalSuggestions: monthlySuggestions.length,
+        implementedSuggestions: implementedCount,
+        topCategories,
+        suggestions: monthlySuggestions
+      };
+    }).reverse(); // Most recent month first
+  };
   
-  const monthlyReport = useMemo(() => {
-    if (!selectedMonth) return null;
-    
-    const [year, month] = selectedMonth.split('-').map(Number);
-    const startDate = startOfMonth(new Date(year, month - 1));
-    const endDate = endOfMonth(new Date(year, month - 1));
-    
-    const monthlySuggestions = suggestions.filter(suggestion => {
-      const date = parseISO(suggestion.createdAt);
-      return isWithinInterval(date, { start: startDate, end: endDate });
-    });
-    
-    const categoryCounts: Record<string, number> = {};
-    monthlySuggestions.forEach(suggestion => {
-      const category = suggestion.category || 'Other';
-      categoryCounts[category] = (categoryCounts[category] || 0) + 1;
-    });
-    
-    const topCategories = Object.entries(categoryCounts)
-      .map(([category, count]) => ({ category, count }))
-      .sort((a, b) => b.count - a.count);
-    
-    const statusCounts: Record<string, number> = {};
-    monthlySuggestions.forEach(suggestion => {
-      statusCounts[suggestion.status] = (statusCounts[suggestion.status] || 0) + 1;
-    });
-    
-    return {
-      month: format(startDate, 'MMMM'),
-      year,
-      totalSuggestions: monthlySuggestions.length,
-      implementedSuggestions: statusCounts['implemented'] || 0,
-      topCategories,
-      suggestions: monthlySuggestions,
-      statusData: Object.entries(statusCounts).map(([status, count]) => ({
-        status: status.charAt(0).toUpperCase() + status.slice(1),
-        count
-      }))
-    };
-  }, [selectedMonth, suggestions]);
+  const monthlyReports = generateMonthlyReports();
   
-  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
-  
-  if (availableMonths.length === 0) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Monthly Reports</CardTitle>
-          <CardDescription>
-            No suggestion data is available for reporting yet
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="text-center py-8 text-muted-foreground">
-          Once customers submit suggestions, you'll see monthly reports and analytics here
-        </CardContent>
-      </Card>
-    );
-  }
+  // Prepare chart data
+  const chartData = monthlyReports.map(report => ({
+    name: `${report.month} ${report.year}`,
+    total: report.totalSuggestions,
+    implemented: report.implementedSuggestions
+  }));
   
   return (
     <Card>
       <CardHeader>
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <CardTitle>Monthly Suggestion Reports</CardTitle>
-            <CardDescription>
-              Analytics and insights from customer suggestions
-            </CardDescription>
-          </div>
-          
-          <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+        <CardTitle className="flex items-center gap-2">
+          <BarChart className="h-5 w-5" />
+          Suggestion Reports
+        </CardTitle>
+        <CardDescription>
+          View monthly reports and trends of customer suggestions
+        </CardDescription>
+        
+        <div className="flex justify-end mt-4">
+          <Select value={timeRange} onValueChange={setTimeRange}>
             <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Select month" />
+              <SelectValue placeholder="Select time range" />
             </SelectTrigger>
             <SelectContent>
-              {availableMonths.map(monthKey => {
-                const [year, month] = monthKey.split('-').map(Number);
-                const date = new Date(year, month - 1);
-                return (
-                  <SelectItem key={monthKey} value={monthKey}>
-                    {format(date, 'MMMM yyyy')}
-                  </SelectItem>
-                );
-              })}
+              <SelectItem value="3">Last 3 months</SelectItem>
+              <SelectItem value="6">Last 6 months</SelectItem>
+              <SelectItem value="12">Last 12 months</SelectItem>
             </SelectContent>
           </Select>
         </div>
       </CardHeader>
       
       <CardContent>
-        {!monthlyReport ? (
-          <div className="text-center py-8 text-muted-foreground">
-            No data available for the selected month
-          </div>
-        ) : (
-          <div className="space-y-8">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-lg">Total Suggestions</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-3xl font-bold">{monthlyReport.totalSuggestions}</div>
-                  <p className="text-sm text-muted-foreground">
-                    Received in {monthlyReport.month} {monthlyReport.year}
-                  </p>
-                </CardContent>
-              </Card>
-              
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-lg">Implementation Rate</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-3xl font-bold">
-                    {monthlyReport.totalSuggestions === 0 
-                      ? '0%' 
-                      : `${Math.round((monthlyReport.implementedSuggestions / monthlyReport.totalSuggestions) * 100)}%`}
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    {monthlyReport.implementedSuggestions} implemented out of {monthlyReport.totalSuggestions}
-                  </p>
-                </CardContent>
-              </Card>
-              
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-lg">Top Category</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {monthlyReport.topCategories.length > 0 ? (
-                    <>
-                      <div className="text-2xl font-bold">{monthlyReport.topCategories[0].category}</div>
-                      <p className="text-sm text-muted-foreground">
-                        {monthlyReport.topCategories[0].count} suggestions
-                      </p>
-                    </>
-                  ) : (
-                    <p className="text-muted-foreground">No categories found</p>
-                  )}
-                </CardContent>
-              </Card>
+        <Tabs defaultValue="chart" className="space-y-4">
+          <TabsList>
+            <TabsTrigger value="chart">Chart View</TabsTrigger>
+            <TabsTrigger value="monthly">Monthly Breakdown</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="chart" className="space-y-4">
+            <div className="h-[300px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <RechartsBarChart
+                  data={chartData}
+                  margin={{
+                    top: 20,
+                    right: 30,
+                    left: 20,
+                    bottom: 5,
+                  }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" />
+                  <YAxis />
+                  <Tooltip />
+                  <Legend />
+                  <Bar dataKey="total" fill="#8884d8" name="Total Suggestions" />
+                  <Bar dataKey="implemented" fill="#82ca9d" name="Implemented" />
+                </RechartsBarChart>
+              </ResponsiveContainer>
             </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-8">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Status Distribution</CardTitle>
-                </CardHeader>
-                <CardContent className="h-[300px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={monthlyReport.statusData}
-                        cx="50%"
-                        cy="50%"
-                        labelLine={false}
-                        outerRadius={80}
-                        fill="#8884d8"
-                        dataKey="count"
-                        nameKey="status"
-                        label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                      >
-                        {monthlyReport.statusData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <Tooltip />
-                      <Legend />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </CardContent>
-              </Card>
-              
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Category Breakdown</CardTitle>
-                </CardHeader>
-                <CardContent className="h-[300px]">
-                  {monthlyReport.topCategories.length === 0 ? (
-                    <div className="h-full flex items-center justify-center text-muted-foreground">
-                      No category data available
+          </TabsContent>
+          
+          <TabsContent value="monthly">
+            <div className="space-y-6">
+              {monthlyReports.map((report, index) => (
+                <div key={index} className="border rounded-lg p-4">
+                  <h3 className="text-lg font-medium flex items-center gap-2">
+                    <Calendar className="h-4 w-4" />
+                    {report.month} {report.year}
+                  </h3>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                    <div className="bg-muted rounded-md p-3">
+                      <p className="text-sm text-muted-foreground">Total Suggestions</p>
+                      <p className="text-2xl font-bold">{report.totalSuggestions}</p>
                     </div>
-                  ) : (
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart
-                        data={monthlyReport.topCategories}
-                        margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-                      >
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="category" />
-                        <YAxis />
-                        <Tooltip />
-                        <Bar dataKey="count" fill="#8884d8" name="Suggestions" />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
-            
-            <div className="mt-8">
-              <h3 className="text-lg font-medium mb-4">Top Suggestions This Month</h3>
-              <div className="space-y-4">
-                {monthlyReport.suggestions.slice(0, 5).map((suggestion) => (
-                  <Card key={suggestion.id} className="overflow-hidden">
-                    <CardContent className="p-4">
-                      <div className="flex justify-between items-start">
-                        <div className="flex-1">
-                          <p className="font-medium">{suggestion.content}</p>
-                          <div className="flex items-center gap-2 mt-2 text-sm text-muted-foreground">
-                            <span>{suggestion.isAnonymous ? 'Anonymous' : suggestion.customerName}</span>
-                            <span>•</span>
-                            <span>{format(parseISO(suggestion.createdAt), 'MMM d, yyyy')}</span>
-                          </div>
-                        </div>
-                        <div className="flex gap-2">
-                          {suggestion.category && (
-                            <Badge variant="outline">{suggestion.category}</Badge>
-                          )}
-                          <Badge 
-                            className={
-                              suggestion.status === 'new' ? 'bg-blue-500 text-white' :
-                              suggestion.status === 'reviewed' ? 'bg-yellow-500 text-white' :
-                              suggestion.status === 'implemented' ? 'bg-green-500 text-white' :
-                              'bg-red-500 text-white'
-                            }
-                          >
-                            {suggestion.status.charAt(0).toUpperCase() + suggestion.status.slice(1)}
+                    
+                    <div className="bg-muted rounded-md p-3">
+                      <p className="text-sm text-muted-foreground">Implementation Rate</p>
+                      <p className="text-2xl font-bold">
+                        {report.totalSuggestions > 0 
+                          ? Math.round((report.implementedSuggestions / report.totalSuggestions) * 100)
+                          : 0}%
+                      </p>
+                    </div>
+                    
+                    <div className="bg-muted rounded-md p-3">
+                      <p className="text-sm text-muted-foreground">Top Categories</p>
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        {report.topCategories.map((cat, idx) => (
+                          <Badge key={idx} variant="outline">
+                            {cat.category} ({cat.count})
                           </Badge>
-                        </div>
+                        ))}
                       </div>
-                    </CardContent>
-                  </Card>
-                ))}
-                
-                {monthlyReport.suggestions.length === 0 && (
-                  <div className="text-center py-4 text-muted-foreground">
-                    No suggestions found for this month
+                    </div>
                   </div>
-                )}
-              </div>
+                </div>
+              ))}
             </div>
-          </div>
-        )}
+          </TabsContent>
+        </Tabs>
       </CardContent>
     </Card>
   );
