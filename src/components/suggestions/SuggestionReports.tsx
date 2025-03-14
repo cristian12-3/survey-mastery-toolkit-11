@@ -1,4 +1,3 @@
-
 import { useState, useMemo } from 'react';
 import { format, parseISO, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns';
 import { 
@@ -30,7 +29,7 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select";
-import { ChartIcon } from 'lucide-react';
+import { BarChart as BarChartIcon } from 'lucide-react';
 
 interface SuggestionReportsProps {
   suggestions: Suggestion[];
@@ -38,12 +37,10 @@ interface SuggestionReportsProps {
 
 export default function SuggestionReports({ suggestions }: SuggestionReportsProps) {
   const [selectedMonth, setSelectedMonth] = useState<string>(() => {
-    // Set current month as default
     const now = new Date();
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
   });
   
-  // Generate the list of months for which we have data
   const availableMonths = useMemo(() => {
     const months = new Set<string>();
     
@@ -56,7 +53,6 @@ export default function SuggestionReports({ suggestions }: SuggestionReportsProp
     return Array.from(months).sort().reverse();
   }, [suggestions]);
   
-  // Generate report for the selected month
   const monthlyReport = useMemo(() => {
     if (!selectedMonth) return null;
     
@@ -69,7 +65,6 @@ export default function SuggestionReports({ suggestions }: SuggestionReportsProp
       return isWithinInterval(date, { start: startDate, end: endDate });
     });
     
-    // Count by category
     const categoryCounts: Record<string, number> = {};
     monthlySuggestions.forEach(suggestion => {
       const category = suggestion.category || 'Other';
@@ -80,7 +75,6 @@ export default function SuggestionReports({ suggestions }: SuggestionReportsProp
       .map(([category, count]) => ({ category, count }))
       .sort((a, b) => b.count - a.count);
     
-    // Count by status
     const statusCounts: Record<string, number> = {};
     monthlySuggestions.forEach(suggestion => {
       statusCounts[suggestion.status] = (statusCounts[suggestion.status] || 0) + 1;
@@ -100,7 +94,6 @@ export default function SuggestionReports({ suggestions }: SuggestionReportsProp
     };
   }, [selectedMonth, suggestions]);
   
-  // Define colors for the pie chart
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
   
   if (availableMonths.length === 0) {
@@ -205,7 +198,6 @@ export default function SuggestionReports({ suggestions }: SuggestionReportsProp
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-8">
-              {/* Status Distribution Chart */}
               <Card>
                 <CardHeader>
                   <CardTitle className="text-lg">Status Distribution</CardTitle>
@@ -235,7 +227,6 @@ export default function SuggestionReports({ suggestions }: SuggestionReportsProp
                 </CardContent>
               </Card>
               
-              {/* Category Distribution Chart */}
               <Card>
                 <CardHeader>
                   <CardTitle className="text-lg">Category Breakdown</CardTitle>
