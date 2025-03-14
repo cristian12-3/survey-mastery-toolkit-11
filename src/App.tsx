@@ -10,6 +10,7 @@ import Results from "./pages/Results";
 import NotFound from "./pages/NotFound";
 import TakeSurvey from "./pages/TakeSurvey";
 import Suggestions from "./pages/Suggestions";
+import SurveyResponse from "./pages/SurveyResponse";
 import CustomerGrowth from "./pages/CustomerGrowth";
 import Requirements from "./pages/Requirements";
 
@@ -26,6 +27,7 @@ const App = () => (
           <Route path="/create" element={<CreateSurvey />} />
           <Route path="/results" element={<Results />} />
           <Route path="/survey/:surveyId" element={<TakeSurvey />} />
+          <Route path="/response/:surveyId" element={<SurveyResponse />} />
           <Route path="/suggestions" element={<Suggestions />} />
           <Route path="/customers" element={<CustomerGrowth />} />
           <Route path="/requirements" element={<Requirements />} />
