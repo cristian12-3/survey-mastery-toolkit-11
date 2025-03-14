@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { v4 as uuidv4 } from 'uuid';
@@ -14,7 +15,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Suggestion, SuggestionFormData, KnowledgeBaseItem } from '@/types/suggestions';
+import { Suggestion, SuggestionFormData, KnowledgeBaseItem, Customer } from '@/types/suggestions';
 import { MessageSquare, Search, Book } from 'lucide-react';
 
 const initialSuggestions: Suggestion[] = [
