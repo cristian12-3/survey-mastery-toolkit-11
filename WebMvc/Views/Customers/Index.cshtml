@@ -1,0 +1,166 @@
+
+@model CustomerGrowthViewModel
+@{
+    ViewData["Title"] = "Customer Growth Tracking";
+}
+
+<div class="bg-background p-8">
+    <div class="max-w-7xl mx-auto">
+        <div class="flex justify-between items-center mb-8">
+            <div>
+                <h1 class="text-3xl font-bold tracking-tight sm:text-4xl mb-2">Customer Growth Tracking</h1>
+                <p class="text-muted-foreground">
+                    Track and manage your customers and their growth metrics
+                </p>
+            </div>
+            
+            <a asp-controller="Customers" asp-action="Create" class="btn btn-primary">
+                <i class="icon-plus mr-2"></i> Add Customer
+            </a>
+        </div>
+
+        @if (TempData["SuccessMessage"] != null)
+        {
+            <div class="alert alert-success mb-6">
+                @TempData["SuccessMessage"]
+            </div>
+        }
+
+        @if (TempData["ErrorMessage"] != null)
+        {
+            <div class="alert alert-danger mb-6">
+                @TempData["ErrorMessage"]
+            </div>
+        }
+        
+        <div class="grid grid-cols-1 gap-8">
+            <!-- Service Usage Analytics -->
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title flex items-center gap-2">
+                        <i class="icon-bar-chart-2"></i> Service Usage Analytics
+                    </h2>
+                    <p class="card-description">
+                        Breakdown of services used by customers
+                    </p>
+                </div>
+                <div class="card-content">
+                    <div class="h-[300px] w-full">
+                        <div id="serviceUsageChart" style="height: 100%;"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Customer Directory -->
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title flex items-center gap-2">
+                        <i class="icon-users"></i> Customer Directory
+                    </h2>
+                    <p class="card-description">
+                        List of all customers and their information
+                    </p>
+                </div>
+                <div class="card-content p-0">
+                    <div class="overflow-x-auto">
+                        <table class="w-full border-collapse">
+                            <thead>
+                                <tr class="border-b">
+                                    <th class="text-left py-3 px-4">Brand Name</th>
+                                    <th class="text-left py-3 px-4">Contact</th>
+                                    <th class="text-left py-3 px-4">Services</th>
+                                    <th class="text-left py-3 px-4">Since</th>
+                                    <th class="text-left py-3 px-4">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var customer in Model.Customers)
+                                {
+                                    <tr class="border-b hover:bg-muted/50">
+                                        <td class="py-3 px-4 font-medium">@customer.BrandName</td>
+                                        <td class="py-3 px-4">
+                                            <div>@customer.ContactEmail</div>
+                                            <div class="text-muted-foreground text-sm">@customer.ContactPhone</div>
+                                        </td>
+                                        <td class="py-3 px-4">
+                                            <div class="flex flex-wrap gap-1">
+                                                @foreach (var service in customer.AcquiredServices)
+                                                {
+                                                    <span class="inline-block px-2 py-1 text-xs bg-primary/10 text-primary rounded-full">
+                                                        @service
+                                                    </span>
+                                                }
+                                            </div>
+                                        </td>
+                                        <td class="py-3 px-4">@customer.CreatedAt.ToString("MMM yyyy")</td>
+                                        <td class="py-3 px-4">
+                                            <div class="flex space-x-2">
+                                                <a asp-controller="Customers" asp-action="Edit" asp-route-id="@customer.Id" class="btn btn-sm btn-outline">
+                                                    Edit
+                                                </a>
+                                                <form asp-controller="Customers" asp-action="Delete" asp-route-id="@customer.Id" method="post"
+                                                      onsubmit="return confirm('Are you sure you want to delete this customer?');">
+                                                    <button type="submit" class="btn btn-sm btn-outline btn-danger">Delete</button>
+                                                </form>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                                @if (Model.Customers.Count == 0)
+                                {
+                                    <tr>
+                                        <td colspan="5" class="py-4 text-center text-muted-foreground">
+                                            No customers added yet. Click "Add Customer" to get started.
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Service Usage Chart
+        const serviceLabels = @Json.Serialize(Model.ServiceUsageData.Select(s => s.Name).ToArray());
+        const serviceData = @Json.Serialize(Model.ServiceUsageData.Select(s => s.Count).ToArray());
+        
+        const serviceCtx = document.getElementById('serviceUsageChart').getContext('2d');
+        new Chart(serviceCtx, {
+            type: 'bar',
+            data: {
+                labels: serviceLabels,
+                datasets: [{
+                    label: 'Number of Customers',
+                    data: serviceData,
+                    backgroundColor: 'rgba(139, 92, 246, 0.7)',
+                    borderColor: 'rgba(139, 92, 246, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        grid: {
+                            drawBorder: false
+                        }
+                    },
+                    y: {
+                        grid: {
+                            display: false
+                        }
+                    }
+                }
+            }
+        });
+    </script>
+}
