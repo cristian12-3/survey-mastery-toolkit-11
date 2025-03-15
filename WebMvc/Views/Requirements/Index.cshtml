@@ -1,0 +1,207 @@
+
+@model RequirementsViewModel
+@{
+    ViewData["Title"] = "Requirements Management";
+}
+
+<div class="bg-background p-8">
+    <div class="max-w-7xl mx-auto">
+        <div class="text-center mb-8">
+            <h1 class="text-3xl font-bold tracking-tight sm:text-4xl mb-2">Requirements Management</h1>
+            <p class="text-muted-foreground max-w-2xl mx-auto">
+                Submit new requirements or search for existing solutions
+            </p>
+        </div>
+
+        @if (TempData["SuccessMessage"] != null)
+        {
+            <div class="alert alert-success mb-6">
+                @TempData["SuccessMessage"]
+            </div>
+        }
+
+        @if (TempData["ErrorMessage"] != null)
+        {
+            <div class="alert alert-danger mb-6">
+                @TempData["ErrorMessage"]
+            </div>
+        }
+
+        <div class="tab-container">
+            <div class="tab-list grid grid-cols-3 mb-8">
+                <a asp-controller="Requirements" asp-action="Index" asp-route-tab="new" 
+                   class="tab-item @(Model.ActiveTab == "new" ? "active" : "")">Submit New Requirement</a>
+                <a asp-controller="Requirements" asp-action="ViewRequirements" 
+                   class="tab-item @(Model.ActiveTab == "existing" ? "active" : "")">View Requirements</a>
+                <a asp-controller="Requirements" asp-action="KnowledgeBase" 
+                   class="tab-item @(Model.ActiveTab == "knowledge" ? "active" : "")">Knowledge Base</a>
+            </div>
+            
+            <div class="tab-content">
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title flex items-center gap-2">
+                            <i class="icon-message-square"></i> New Requirement
+                        </h2>
+                        <p class="card-description">
+                            Submit a new requirement or issue
+                        </p>
+                    </div>
+                    <form asp-controller="Requirements" asp-action="Submit" method="post">
+                        <div class="card-content space-y-6">
+                            <div class="space-y-2">
+                                <label for="content" class="form-label">Requirement Description</label>
+                                <textarea id="content" name="Content" class="form-textarea min-h-[120px]"
+                                          placeholder="Describe your requirement in detail..." required
+                                          data-requirement-content></textarea>
+                                <span class="text-sm text-red-500 field-validation-valid" data-valmsg-for="Content"></span>
+                            </div>
+                            
+                            <div id="similarItemsContainer" class="bg-muted p-4 rounded-md border border-border hidden">
+                                <h4 class="font-medium flex items-center gap-2 mb-2">
+                                    <i class="icon-search"></i> Similar items found
+                                </h4>
+                                <div id="similarRequirements" class="mb-3 hidden">
+                                    <p class="text-sm font-medium mb-1">Similar requirements:</p>
+                                    <ul class="text-sm space-y-1" id="similarRequirementsList"></ul>
+                                </div>
+                                <div id="knowledgeItems" class="hidden">
+                                    <p class="text-sm font-medium mb-1">From knowledge base:</p>
+                                    <ul class="text-sm space-y-1" id="knowledgeItemsList"></ul>
+                                </div>
+                            </div>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div class="space-y-2">
+                                    <label for="customerName" class="form-label">Your Name</label>
+                                    <input id="customerName" name="CustomerName" class="form-input" placeholder="John Doe" required />
+                                    <span class="text-sm text-red-500 field-validation-valid" data-valmsg-for="CustomerName"></span>
+                                </div>
+                                
+                                <div class="space-y-2">
+                                    <label for="customerEmail" class="form-label">Email Address</label>
+                                    <input id="customerEmail" name="CustomerEmail" type="email" class="form-input" 
+                                           placeholder="john@example.com" required />
+                                    <span class="text-sm text-red-500 field-validation-valid" data-valmsg-for="CustomerEmail"></span>
+                                </div>
+                            </div>
+                            
+                            <div class="space-y-2">
+                                <label for="category" class="form-label">Category</label>
+                                <select id="category" name="Category" class="form-select">
+                                    <option value="">Select a category</option>
+                                    @foreach (var category in Model.Categories)
+                                    {
+                                        <option value="@category">@category</option>
+                                    }
+                                </select>
+                            </div>
+                            
+                            <input type="hidden" name="IsAnonymous" value="false" />
+                        </div>
+                        
+                        <div class="card-footer flex justify-end">
+                            <button type="submit" class="btn btn-primary">Submit Requirement</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const contentTextarea = document.querySelector('[data-requirement-content]');
+            const similarItemsContainer = document.getElementById('similarItemsContainer');
+            const similarRequirementsSection = document.getElementById('similarRequirements');
+            const knowledgeItemsSection = document.getElementById('knowledgeItems');
+            const similarRequirementsList = document.getElementById('similarRequirementsList');
+            const knowledgeItemsList = document.getElementById('knowledgeItemsList');
+            
+            let typingTimer;
+            
+            contentTextarea.addEventListener('input', function() {
+                clearTimeout(typingTimer);
+                const content = this.value.trim();
+                
+                if (content.length < 10) {
+                    similarItemsContainer.classList.add('hidden');
+                    return;
+                }
+                
+                typingTimer = setTimeout(function() {
+                    findSimilarItems(content);
+                }, 500);
+            });
+            
+            function findSimilarItems(content) {
+                fetch(`/requirements/similar?content=${encodeURIComponent(content)}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            const hasRequirements = data.requirements && data.requirements.length > 0;
+                            const hasKnowledgeItems = data.knowledgeItems && data.knowledgeItems.length > 0;
+                            
+                            if (hasRequirements || hasKnowledgeItems) {
+                                similarItemsContainer.classList.remove('hidden');
+                                
+                                if (hasRequirements) {
+                                    similarRequirementsSection.classList.remove('hidden');
+                                    renderRequirements(data.requirements);
+                                } else {
+                                    similarRequirementsSection.classList.add('hidden');
+                                }
+                                
+                                if (hasKnowledgeItems) {
+                                    knowledgeItemsSection.classList.remove('hidden');
+                                    renderKnowledgeItems(data.knowledgeItems);
+                                } else {
+                                    knowledgeItemsSection.classList.add('hidden');
+                                }
+                            } else {
+                                similarItemsContainer.classList.add('hidden');
+                            }
+                        } else {
+                            similarItemsContainer.classList.add('hidden');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error finding similar items:', error);
+                        similarItemsContainer.classList.add('hidden');
+                    });
+            }
+            
+            function renderRequirements(requirements) {
+                similarRequirementsList.innerHTML = '';
+                
+                requirements.slice(0, 3).forEach(req => {
+                    const li = document.createElement('li');
+                    li.className = 'p-2 bg-background rounded-md';
+                    li.innerHTML = `
+                        ${req.content}
+                        <span class="block text-xs text-muted-foreground mt-1">
+                            Status: ${req.status} • Category: ${req.category || 'Uncategorized'}
+                        </span>
+                    `;
+                    similarRequirementsList.appendChild(li);
+                });
+            }
+            
+            function renderKnowledgeItems(items) {
+                knowledgeItemsList.innerHTML = '';
+                
+                items.slice(0, 2).forEach(item => {
+                    const li = document.createElement('li');
+                    li.className = 'p-2 bg-background rounded-md';
+                    li.innerHTML = `
+                        <strong>${item.title}</strong>
+                        <p class="text-muted-foreground text-xs mt-1">${item.content.substring(0, 100)}...</p>
+                    `;
+                    knowledgeItemsList.appendChild(li);
+                });
+            }
+        });
+    </script>
+}
