@@ -5,15 +5,15 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ServiceProvider } from "./infrastructure/context/ServiceContext";
-import Index from "./presentation/pages/Index";
-import CreateSurvey from "./presentation/pages/CreateSurvey"; 
-import Results from "./presentation/pages/Results";
-import NotFound from "./presentation/pages/NotFound";
-import TakeSurvey from "./presentation/pages/TakeSurvey";
-import Suggestions from "./presentation/pages/Suggestions";
-import SurveyResponse from "./presentation/pages/SurveyResponse";
-import CustomerGrowth from "./presentation/pages/CustomerGrowth";
-import Requirements from "./presentation/pages/Requirements";
+import Index from "./pages/Index";
+import CreateSurvey from "./pages/CreateSurvey";
+import Results from "./pages/Results";
+import NotFound from "./pages/NotFound";
+import TakeSurvey from "./pages/TakeSurvey";
+import Suggestions from "./pages/Suggestions";
+import SurveyResponse from "./pages/SurveyResponse";
+import CustomerGrowth from "./pages/CustomerGrowth";
+import Requirements from "./pages/Requirements";
 
 const queryClient = new QueryClient();
 
