@@ -1,9 +1,8 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import DataVisualizations from "@/components/results/DataVisualizations";
-import { sampleSurveys, sampleResponses, Survey } from "@/utils/sampleData";
+import { Survey, sampleSurveys, sampleResponses } from "@/utils/sampleData";
 import { BarChart, PieChart, Download, Filter, Calendar, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Navbar from '@/components/layout/Navbar';
@@ -18,7 +17,7 @@ export default function Results() {
 
   const getAverageCompletionTime = () => {
     if (surveyResponses.length === 0) return 0;
-    const total = surveyResponses.reduce((sum, response) => sum + response.completionTime, 0);
+    const total = surveyResponses.reduce((sum, response) => sum + (response.completionTime || 0), 0);
     return Math.round(total / surveyResponses.length);
   };
 
@@ -60,7 +59,7 @@ export default function Results() {
                       >
                         <div className="font-medium truncate">{survey.title}</div>
                         <div className="text-sm text-muted-foreground mt-1">
-                          {survey.responses} responses
+                          {survey.responses?.length || 0} responses
                         </div>
                       </button>
                     ))}
@@ -100,7 +99,7 @@ export default function Results() {
                         </div>
                         <div>
                           <div className="text-sm text-muted-foreground">Total Responses</div>
-                          <div className="text-2xl font-bold">{selectedSurvey.responses}</div>
+                          <div className="text-2xl font-bold">{selectedSurvey.responses?.length || 0}</div>
                         </div>
                       </div>
                     </CardContent>
@@ -114,7 +113,7 @@ export default function Results() {
                         </div>
                         <div>
                           <div className="text-sm text-muted-foreground">Completion Rate</div>
-                          <div className="text-2xl font-bold">{selectedSurvey.completionRate}%</div>
+                          <div className="text-2xl font-bold">{selectedSurvey.completionRate || 0}%</div>
                         </div>
                       </div>
                     </CardContent>
@@ -175,7 +174,7 @@ export default function Results() {
                                       <td className="px-4 py-3">
                                         {new Date(response.submittedAt).toLocaleDateString()}
                                       </td>
-                                      <td className="px-4 py-3">{formatTime(response.completionTime)}</td>
+                                      <td className="px-4 py-3">{formatTime(response.completionTime || 0)}</td>
                                       <td className="px-4 py-3 text-right">
                                         <Button variant="ghost" size="sm">View Details</Button>
                                       </td>

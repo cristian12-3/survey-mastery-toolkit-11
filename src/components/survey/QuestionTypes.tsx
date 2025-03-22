@@ -9,8 +9,7 @@ import {
   Grid, 
   MoveVertical, 
   LineChart, 
-  Calendar, 
-  Upload 
+  Calendar
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { QuestionType, getQuestionTypeInfo } from "@/utils/sampleData";
@@ -30,8 +29,7 @@ export default function QuestionTypes({ onSelectType, selectedType }: QuestionTy
     { type: 'matrix', icon: <Grid className="w-5 h-5" /> },
     { type: 'ranking', icon: <MoveVertical className="w-5 h-5" /> },
     { type: 'nps', icon: <LineChart className="w-5 h-5" /> },
-    { type: 'date', icon: <Calendar className="w-5 h-5" /> },
-    { type: 'file-upload', icon: <Upload className="w-5 h-5" /> }
+    { type: 'date', icon: <Calendar className="w-5 h-5" /> }
   ];
 
   return (

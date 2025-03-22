@@ -187,6 +187,12 @@ export const surveys: Survey[] = [
   }
 ];
 
+// Export a reference to surveys for components that need it
+export const sampleSurveys = surveys;
+
+// Export sample responses for use in Results page
+export const sampleResponses: Response[] = surveys.flatMap(survey => survey.responses || []);
+
 // Helper function to generate a new empty question
 export const createNewQuestion = (type: QuestionType = 'text'): Question => {
   return {
@@ -211,4 +217,116 @@ export const createNewSurvey = (): Survey => {
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
   };
+};
+
+// Sample customers data
+export const sampleCustomers = [
+  {
+    id: "c1",
+    brandName: "TechSolutions Inc.",
+    contactEmail: "contact@techsolutions.example",
+    contactPhone: "+1-555-123-4567",
+    acquiredServices: ["Surveys Pro", "Analytics", "API Access"],
+    createdAt: "2023-01-15T10:30:00Z",
+    growthMetrics: [
+      {
+        period: "2023-Q1",
+        revenue: 12500,
+        userCount: 45
+      },
+      {
+        period: "2023-Q2",
+        revenue: 15700,
+        userCount: 58
+      }
+    ]
+  },
+  {
+    id: "c2",
+    brandName: "Marketing Masters",
+    contactEmail: "info@marketingmasters.example",
+    contactPhone: "+1-555-987-6543",
+    acquiredServices: ["Surveys Basic", "Email Campaigns"],
+    createdAt: "2023-02-22T14:45:00Z",
+    growthMetrics: [
+      {
+        period: "2023-Q1",
+        revenue: 5200,
+        userCount: 12
+      },
+      {
+        period: "2023-Q2",
+        revenue: 7800,
+        userCount: 21
+      }
+    ]
+  }
+];
+
+// Sample suggestions data
+export const sampleSuggestions = [
+  {
+    id: "s1",
+    title: "Add dark mode to survey forms",
+    content: "It would be great to have a dark mode option for surveys, especially for users who prefer this mode for eye comfort.",
+    category: "UI/UX",
+    tags: ["dark-mode", "accessibility", "ui-enhancement"],
+    createdAt: "2023-04-10T09:15:00Z",
+    updatedAt: "2023-04-10T09:15:00Z",
+    status: "new"
+  },
+  {
+    id: "s2",
+    title: "Support for video questions",
+    content: "Allow survey creators to add video questions where respondents can record video responses.",
+    category: "Feature Request",
+    tags: ["video", "multimedia", "survey-enhancement"],
+    createdAt: "2023-03-22T15:30:00Z",
+    updatedAt: "2023-03-25T11:20:00Z",
+    status: "in-review"
+  }
+];
+
+// Add getQuestionTypeInfo function
+export const getQuestionTypeInfo = (type: QuestionType) => {
+  const questionTypeInfo = {
+    'text': {
+      name: 'Text',
+      description: 'Open-ended questions'
+    },
+    'single-choice': {
+      name: 'Single Choice',
+      description: 'Select one option'
+    },
+    'multiple-choice': {
+      name: 'Multiple Choice',
+      description: 'Select multiple options'
+    },
+    'dropdown': {
+      name: 'Dropdown',
+      description: 'Select from a dropdown menu'
+    },
+    'rating': {
+      name: 'Rating',
+      description: 'Rate on a numeric scale'
+    },
+    'nps': {
+      name: 'Net Promoter Score',
+      description: 'Likelihood to recommend'
+    },
+    'matrix': {
+      name: 'Matrix',
+      description: 'Grid of questions and options'
+    },
+    'ranking': {
+      name: 'Ranking',
+      description: 'Drag to order preferences'
+    },
+    'date': {
+      name: 'Date',
+      description: 'Select a date'
+    }
+  };
+  
+  return questionTypeInfo[type] || { name: 'Custom', description: 'Custom question type' };
 };
