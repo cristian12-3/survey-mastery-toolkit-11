@@ -41,5 +41,8 @@ export const useSurveys = () => {
     createSurvey: createSurveyMutation.mutate,
     updateSurvey: updateSurveyMutation.mutate,
     deleteSurvey: deleteSurveyMutation.mutate,
+    isCreating: createSurveyMutation.isPending,
+    isUpdating: updateSurveyMutation.isPending,
+    isDeleting: deleteSurveyMutation.isPending,
   };
 };
