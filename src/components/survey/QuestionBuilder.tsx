@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { Question, QuestionType } from "@/utils/sampleData";
-import { ChevronDown, ChevronUp, Trash2, Plus, GripVertical } from "lucide-react";
+import { ChevronDown, ChevronUp, Trash2, Plus, GripVertical, Upload } from "lucide-react";
 import QuestionTypes from "./QuestionTypes";
 import { cn } from "@/lib/utils";
 

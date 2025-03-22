@@ -125,7 +125,6 @@ export default function CreateSurvey() {
       return;
     }
     
-    // Use the SurveyService through our hook to create/update the survey
     const newSurveyData = {
       title: surveyTitle,
       description: surveyDescription,
@@ -186,16 +185,12 @@ export default function CreateSurvey() {
       return;
     }
 
-    // In a real app, this would connect to a backend service
-    // For demo purposes, we'll just show a success toast
     toast({
       title: "Emails queued",
       description: `Survey will be sent to ${deliveryConfig.emailAddresses.length} recipient(s) according to your delivery settings`,
     });
   };
 
-  
-  
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Navbar />
@@ -289,7 +284,6 @@ export default function CreateSurvey() {
               </div>
             </div>
           </TabsContent>
-          
           
           <TabsContent value="delivery" className="animate-fade-in">
             <div className="grid gap-8">
@@ -444,6 +438,28 @@ export default function CreateSurvey() {
                                   {value}
                                 </button>
                               ))}
+                            </div>
+                          )}
+                          
+                          {question.type === 'file-upload' && (
+                            <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-6 text-center">
+                              <input 
+                                type="file" 
+                                id={`file-upload-${question.id}`} 
+                                className="hidden" 
+                              />
+                              <label 
+                                htmlFor={`file-upload-${question.id}`}
+                                className="cursor-pointer flex flex-col items-center justify-center text-muted-foreground"
+                              >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mb-2">
+                                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                  <polyline points="17 8 12 3 7 8"></polyline>
+                                  <line x1="12" y1="3" x2="12" y2="15"></line>
+                                </svg>
+                                <span className="text-sm font-medium">Click to upload file</span>
+                                <span className="text-xs mt-1">or drag and drop</span>
+                              </label>
                             </div>
                           )}
                         </div>

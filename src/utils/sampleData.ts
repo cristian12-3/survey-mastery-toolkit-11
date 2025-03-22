@@ -1,4 +1,3 @@
-
 import { v4 as uuidv4 } from 'uuid';
 
 export type QuestionType = 
@@ -10,7 +9,8 @@ export type QuestionType =
   | 'nps' 
   | 'matrix' 
   | 'ranking' 
-  | 'date';
+  | 'date'
+  | 'file-upload';
 
 export interface Question {
   id: string;
@@ -51,7 +51,6 @@ export interface Response {
   completionTime?: number;
 }
 
-// Sample surveys data
 export const surveys: Survey[] = [
   {
     id: '1',
@@ -190,13 +189,10 @@ export const surveys: Survey[] = [
   }
 ];
 
-// Export a reference to surveys for components that need it
 export const sampleSurveys = surveys;
 
-// Export sample responses for use in Results page
 export const sampleResponses: Response[] = surveys.flatMap(survey => survey.responses || []);
 
-// Helper function to generate a new empty question
 export const createNewQuestion = (type: QuestionType = 'text'): Question => {
   return {
     id: uuidv4(),
@@ -210,7 +206,6 @@ export const createNewQuestion = (type: QuestionType = 'text'): Question => {
   };
 };
 
-// Helper function to create a new empty survey
 export const createNewSurvey = (): Survey => {
   return {
     id: uuidv4(),
@@ -223,7 +218,6 @@ export const createNewSurvey = (): Survey => {
   };
 };
 
-// Sample customers data
 export const sampleCustomers = [
   {
     id: "c1",
@@ -267,7 +261,6 @@ export const sampleCustomers = [
   }
 ];
 
-// Sample suggestions data
 export const sampleSuggestions = [
   {
     id: "s1",
@@ -293,7 +286,6 @@ export const sampleSuggestions = [
   }
 ];
 
-// Add getQuestionTypeInfo function
 export const getQuestionTypeInfo = (type: QuestionType) => {
   const questionTypeInfo = {
     'text': {
@@ -331,6 +323,10 @@ export const getQuestionTypeInfo = (type: QuestionType) => {
     'date': {
       name: 'Date',
       description: 'Select a date'
+    },
+    'file-upload': {
+      name: 'File Upload',
+      description: 'Upload files or images'
     }
   };
   
