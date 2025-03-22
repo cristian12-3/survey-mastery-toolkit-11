@@ -35,6 +35,7 @@ export interface Survey {
   updatedAt: string;
   responses?: Response[];
   completionRate?: number;
+  isPublished: boolean;
 }
 
 export interface Answer {
@@ -115,7 +116,8 @@ export const surveys: Survey[] = [
         completionTime: 180
       },
     ],
-    completionRate: 85
+    completionRate: 85,
+    isPublished: true
   },
   {
     id: '2',
@@ -183,7 +185,8 @@ export const surveys: Survey[] = [
         completionTime: 150
       }
     ],
-    completionRate: 92
+    completionRate: 92,
+    isPublished: true
   }
 ];
 
@@ -215,7 +218,8 @@ export const createNewSurvey = (): Survey => {
     description: '',
     questions: [createNewQuestion('text')],
     createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
+    updatedAt: new Date().toISOString(),
+    isPublished: false
   };
 };
 
@@ -267,23 +271,25 @@ export const sampleCustomers = [
 export const sampleSuggestions = [
   {
     id: "s1",
-    title: "Add dark mode to survey forms",
-    content: "It would be great to have a dark mode option for surveys, especially for users who prefer this mode for eye comfort.",
+    content: "Add dark mode to survey forms",
     category: "UI/UX",
     tags: ["dark-mode", "accessibility", "ui-enhancement"],
     createdAt: "2023-04-10T09:15:00Z",
-    updatedAt: "2023-04-10T09:15:00Z",
-    status: "new"
+    status: "new",
+    customerName: "John Smith",
+    customerEmail: "john.smith@example.com",
+    isAnonymous: false
   },
   {
     id: "s2",
-    title: "Support for video questions",
-    content: "Allow survey creators to add video questions where respondents can record video responses.",
+    content: "Support for video questions",
     category: "Feature Request",
     tags: ["video", "multimedia", "survey-enhancement"],
     createdAt: "2023-03-22T15:30:00Z",
-    updatedAt: "2023-03-25T11:20:00Z",
-    status: "in-review"
+    status: "in-review",
+    customerName: "Sarah Johnson",
+    customerEmail: "sarah.j@example.com",
+    isAnonymous: false
   }
 ];
 

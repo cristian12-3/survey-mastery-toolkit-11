@@ -4,7 +4,16 @@ import { SuggestionRepository } from "../../application/ports/SuggestionReposito
 import { sampleSuggestions } from "../../utils/sampleData";
 
 export class InMemorySuggestionRepository implements SuggestionRepository {
-  private suggestions: Suggestion[] = [...sampleSuggestions];
+  private suggestions: Suggestion[] = sampleSuggestions.map(suggestion => ({
+    id: suggestion.id,
+    content: suggestion.content,
+    customerName: suggestion.customerName,
+    customerEmail: suggestion.customerEmail,
+    createdAt: suggestion.createdAt,
+    status: suggestion.status as 'new' | 'reviewed' | 'implemented' | 'rejected',
+    category: suggestion.category,
+    isAnonymous: suggestion.isAnonymous || false
+  }));
 
   async getAll(): Promise<Suggestion[]> {
     return Promise.resolve([...this.suggestions]);

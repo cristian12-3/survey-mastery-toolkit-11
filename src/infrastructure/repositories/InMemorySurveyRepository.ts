@@ -4,7 +4,15 @@ import { SurveyRepository } from "../../application/ports/SurveyRepository";
 import { sampleSurveys } from "../../utils/sampleData";
 
 export class InMemorySurveyRepository implements SurveyRepository {
-  private surveys: Survey[] = [...sampleSurveys];
+  private surveys: Survey[] = sampleSurveys.map(survey => ({
+    id: survey.id,
+    title: survey.title,
+    description: survey.description,
+    questions: survey.questions,
+    createdAt: survey.createdAt,
+    updatedAt: survey.updatedAt,
+    isPublished: survey.isPublished
+  }));
 
   async getAll(): Promise<Survey[]> {
     return Promise.resolve([...this.surveys]);
